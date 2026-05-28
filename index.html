@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Mastery Curriculum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #f5f5f0;
+    --surface: #ffffff;
+    --surf2:   #f0f0eb;
+    --border:  #e2e2da;
+    --bord2:   #c8c8be;
+    --text:    #1a1a18;
+    --muted:   #6b6b62;
+    --dim:     #a8a89e;
+    --green:   #1e7e44;
+    --p1: #6d4fc4; --p2: #0e7c6b; --p3: #a16207; --p4: #be2d4a;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;padding:0 0 80px}
+
+  /* header */
+  .hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:18px 20px 14px;position:sticky;top:0;z-index:100}
+  .hdr-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .site-title{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--text)}
+  .site-sub{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
+  .actions{display:flex;gap:6px;flex-shrink:0}
+  .btn{font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:4px;border:1px solid var(--bord2);background:var(--surf2);color:var(--muted);cursor:pointer;transition:all .15s}
+  .btn:hover{border-color:var(--text);color:var(--text)}
+  .btn.del:hover{border-color:var(--p4);color:var(--p4)}
+
+  /* progress */
+  .prog-wrap{margin-top:12px}
+  .prog-row{display:flex;justify-content:space-between;margin-bottom:5px}
+  .prog-lbl{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .prog-pct{font-family:var(--mono);font-size:11px;color:var(--green);font-weight:500}
+  .prog-track{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+  .prog-fill{height:100%;background:var(--green);border-radius:2px;transition:width .4s cubic-bezier(.4,0,.2,1);width:0%}
+
+  /* layout */
+  .main{max-width:700px;margin:0 auto;padding:24px 16px 0}
+
+  /* phase */
+  .phase{margin-bottom:28px}
+  .phase-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+  .pip{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .pname{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+  .prange{font-family:var(--mono);font-size:11px;color:var(--dim);margin-left:auto}
+  .pprog{font-family:var(--mono);font-size:11px}
+
+  /* module card */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:7px;overflow:hidden;transition:border-color .15s}
+  .card:hover{border-color:var(--bord2)}
+  .card.done{border-left:3px solid var(--green)}
+  .card-hdr{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+  .mnum{font-family:var(--mono);font-size:11px;color:var(--dim);min-width:22px;flex-shrink:0}
+  .mtitle-wrap{flex:1;min-width:0}
+  .mtitle{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mtag{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:1px}
+  .mmeta{display:flex;align-items:center;gap:8px;flex-shrink:0}
+  .mfrac{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .mcheck{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--bord2);flex-shrink:0;transition:all .2s;display:flex;align-items:center;justify-content:center}
+  .mcheck svg{display:none}
+  .card.done .mcheck{background:var(--green);border-color:var(--green)}
+  .card.done .mcheck svg{display:block}
+  .chev{color:var(--dim);transition:transform .2s;font-size:10px}
+  .card.open .chev{transform:rotate(180deg)}
+
+  /* module body */
+  .card-body{display:none;padding:0 16px 12px 48px;border-top:1px solid var(--border)}
+  .card.open .card-body{display:block}
+  .ilist{list-style:none;padding-top:8px}
+  .irow{display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .irow:last-child{border-bottom:none}
+  .irow:hover .ilabel{color:var(--text)}
+  .icb{width:14px;height:14px;border:1.5px solid var(--bord2);border-radius:3px;flex-shrink:0;margin-top:2px;transition:all .15s;display:flex;align-items:center;justify-content:center}
+  .irow.checked .icb{background:var(--green);border-color:var(--green)}
+  .irow.checked .icb::after{content:'';width:8px;height:5px;border-left:1.5px solid #fff;border-bottom:1.5px solid #fff;transform:rotate(-45deg) translate(0,-1px)}
+  .ilabel{font-size:13px;color:var(--muted);line-height:1.4;transition:color .15s}
+  .irow.checked .ilabel{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--dim)}
+  .ibadge{font-family:var(--mono);font-size:9px;padding:2px 5px;border-radius:3px;flex-shrink:0;margin-top:3px;letter-spacing:.04em;text-transform:uppercase}
+  .irow.checked .ibadge{opacity:.4}
+
+  /* phase colors */
+  .p1 .pip,.p1 .pname,.p1 .pprog{color:var(--p1)}
+  .p1 .pip{background:var(--p1)}
+  .p2 .pip,.p2 .pname,.p2 .pprog{color:var(--p2)}
+  .p2 .pip{background:var(--p2)}
+  .p3 .pip,.p3 .pname,.p3 .pprog{color:var(--p3)}
+  .p3 .pip{background:var(--p3)}
+  .p4 .pip,.p4 .pname,.p4 .pprog{color:var(--p4)}
+  .p4 .pip{background:var(--p4)}
+
+  .footer{text-align:center;font-family:var(--mono);font-size:10px;color:var(--dim);padding:40px 0 0;letter-spacing:.06em}
+  @media(max-width:480px){.mtitle{font-size:12px}.card-body{padding-left:16px}.ilabel{font-size:12px}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="hdr-top">
+    <div>
+      <div class="site-title">SQL Mastery</div>
+      <div class="site-sub">PostgreSQL · beginner to expert</div>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="expandAll()">expand all</button>
+      <button class="btn" onclick="collapseAll()">collapse</button>
+      <button class="btn del" onclick="resetAll()">reset</button>
+    </div>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-row">
+      <span class="prog-lbl">overall progress</span>
+      <span class="prog-pct" id="pct-lbl">0%</span>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  </div>
+</header>
+
+<main class="main" id="curriculum"></main>
+<div class="footer">sql_mastery · 13 modules · postgresql</div>
+
+<script>
+const C=[
+  {ph:1,pc:'p1',pname:'Phase 1 · Foundation',pr:'Modules 1–4',mods:[
+    {id:'m01',n:'01',title:'The relational model & how PostgreSQL thinks',tag:'theory-first',items:[
+      {id:'m01-01',l:'Set theory & the relation concept',t:'concept'},
+      {id:'m01-02',l:'Tables vs spreadsheets — key differences',t:'concept'},
+      {id:'m01-03',l:'Written order vs evaluation order (FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT)',t:'concept'},
+      {id:'m01-04',l:'NULL & three-valued logic (TRUE / FALSE / UNKNOWN)',t:'concept'},
+      {id:'m01-05',l:'Practice problem submitted & reviewed',t:'practice'},
+    ]},
+    {id:'m02',n:'02',title:'Schema design & data types',tag:'schema · DDL',items:[
+      {id:'m02-01',l:'PostgreSQL native types — TEXT, NUMERIC, TIMESTAMPTZ, UUID, JSONB',t:'concept'},
+      {id:'m02-02',l:'Primary keys & foreign keys',t:'concept'},
+      {id:'m02-03',l:'NOT NULL, DEFAULT, CHECK constraints',t:'concept'},
+      {id:'m02-04',l:'Designing a schema from scratch',t:'lab'},
+      {id:'m02-05',l:'Practice problem submitted & reviewed',t:'practice'},
+    ]},
+    {id:'m03',n:'03',title:'SELECT, FROM, WHERE — the core query engine',tag:'core DML',items:[
+      {id:'m03-01',l:'Basic SELECT & column aliasing with AS',t:'concept'},
+      {id:'m03-02',l:'Filtering with WHERE & logical operators (AND / OR / NOT)',t:'concept'},
+      {id:'m03-03',l:'LIKE / ILIKE pattern matching',t:'concept'},
+      {id:'m03-04',l:'IS NULL / IS NOT NULL',t:'concept'},
+      {id:'m03-05',l:'Type casting with :: (e.g. ::DATE, ::NUMERIC)',t:'concept'},
+      {id:'m03-06',l:'Practice problem submitted & reviewed',t:'practice'},
+    ]},
+    {id:'m04',n:'04',title:'Aggregation — GROUP BY, HAVING, aggregate functions',tag:'aggregation',items:[
+      {id:'m04-01',l:'How GROUP BY collapses rows into groups',t:'concept'},
+      {id:'m04-02',l:'COUNT, SUM, AVG, MIN, MAX',t:'concept'},
+      {id:'m04-03',l:'COUNT(DISTINCT …) for unique value counts',t:'concept'},
+      {id:'m04-04',l:'FILTER clause on aggregate functions',t:'concept'},
+      {id:'m04-05',l:'WHERE vs HAVING — why the distinction exists',t:'concept'},
+      {id:'m04-06',l:'Practice problem submitted & reviewed',t:'practice'},
+    ]},
+  ]},
+  {ph:2,pc:'p2',pname:'Phase 2 · Joins & Multi-Table Reasoning',pr:'Modules 5–7',mods:[
+    {id:'m05',n:'05',title:'JOINs from first principles',tag:'joins',items:[
+      {id:'m05-01',l:'The Cartesian product as the mental model for all joins',t:'concept'},
+      {id:'m05-02',l:'INNER JOIN — matching rows only',t:'concept'},
+      {id:'m05-03',l:'LEFT OUTER JOIN — preserve all left rows',t:'concept'},
+      {id:'m05-04',l:'RIGHT OUTER JOIN & FULL OUTER JOIN',t:'concept'},
+      {id:'m05-05',l:'Self-joins for comparing rows within one table',t:'concept'},
+      {id:'m05-06',l:'Multi-table join chains (3+ tables)',t:'concept'},
+      {id:'m05-07',l:'Practice problem submitted & reviewed',t:'practice'},
+    ]},
+    {id:'m06',n:'06',title:'Subqueries & set operations',tag:'subqueries',items:[
+      {id:'m06-01',l:'Scalar subqueries — returns one value',t:'concept'},
+      {id:'m06-02',l:'Table subqueries in FROM (derived tables)',t:'concept'},
+      {id:'m06-03',l:'Correlated subqueries — referencing the outer query',t:'concept'},
+      {id:'m06-04',l:'EXISTS / NOT EXISTS for existence checks',t:'concept'},
+      {id:'m06-05',l:'UNION, INTERSECT, EXCEPT — set-level operations',t:'concept'},
+      {id:'m06-06',l:'Practice problem submitted & reviewed',t:'practice'},
+    ]},
+    {id:'m07',n:'07',title:'CTEs — Common Table Expressions',tag:'CTEs · recursive',items:[
+      {id:'m07-01',l:'WITH clause basics — named subquery scopes',t:'concept'},
+      {id:'m07-02',l:'Chaining multiple CTEs',t:'concept'},
+      {id:'m07-03',l:'Recursive CTEs for hierarchical data (BOMs, org charts)',t:'concept'},
+      {id:'m07-04',l:'Materialization behavior in PostgreSQL',t:'concept'},
+      {id:'m07-05',l:'Practice problem submitted & reviewed',t:'practice'},
+    ]},
+  ]},
+  {ph:3,pc:'p3',pname:'Phase 3 · Advanced Analytics',pr:'Modules 8–10',mods:[
+    {id:'m08',n:'08',title:'Window functions',tag:'window · analytics',items:[
+      {id:'m08-01',l:'The OVER() clause — a separate pass over data',t:'concept'},
+      {id:'m08-02',l:'PARTITION BY vs GROUP BY — key differences',t:'concept'},
+      {id:'m08-03',l:'ROW_NUMBER, RANK, DENSE_RANK',t:'concept'},
+      {id:'m08-04',l:'LAG / LEAD for period-over-period comparisons',t:'concept'},
+      {id:'m08-05',l:'Frame specifications — ROWS / RANGE BETWEEN',t:'concept'},
+      {id:'m08-06',l:'Running totals & moving averages',t:'lab'},
+      {id:'m08-07',l:'Practice problem submitted & reviewed',t:'practice'},
+    ]},
+    {id:'m09',n:'09',title:'Advanced filtering & conditional logic',tag:'CASE · DISTINCT ON',items:[
+      {id:'m09-01',l:'CASE expressions as inline conditional columns',t:'concept'},
+      {id:'m09-02',l:'COALESCE & NULLIF',t:'concept'},
+      {id:'m09-03',l:'GREATEST / LEAST',t:'concept'},
+      {id:'m09-04',l:'DISTINCT ON for row deduplication (PostgreSQL-specific)',t:'concept'},
+      {id:'m09-05',l:'Practice problem submitted & reviewed',t:'practice'},
+    ]},
+    {id:'m10',n:'10',title:'Date/time, casting & string operations',tag:'temporal · string ops',items:[
+      {id:'m10-01',l:'TIMESTAMPTZ vs TIMESTAMP — timezone handling',t:'concept'},
+      {id:'m10-02',l:'DATE_TRUNC, EXTRACT, AGE, interval arithmetic',t:'concept'},
+      {id:'m10-03',l:'AT TIME ZONE for cross-timezone queries',t:'concept'},
+      {id:'m10-04',l:'String functions — TRIM, UPPER, LOWER, SPLIT_PART, CONCAT',t:'lab'},
+      {id:'m10-05',l:'Regex with ~ and regexp_replace',t:'concept'},
+      {id:'m10-06',l:'Practice problem submitted & reviewed',t:'practice'},
+    ]},
+  ]},
+  {ph:4,pc:'p4',pname:'Phase 4 · Expert Architecture',pr:'Modules 11–13',mods:[
+    {id:'m11',n:'11',title:'Indexes, query planning & performance',tag:'performance · EXPLAIN',items:[
+      {id:'m11-01',l:'How the PostgreSQL planner works — seq scan vs index scan',t:'concept'},
+      {id:'m11-02',l:'B-tree index mechanics',t:'concept'},
+      {id:'m11-03',l:'Partial indexes for filtered data sets',t:'concept'},
+      {id:'m11-04',l:'Reading EXPLAIN ANALYZE output',t:'lab'},
+      {id:'m11-05',l:'Writing planner-friendly queries',t:'lab'},
+      {id:'m11-06',l:'Practice problem submitted & reviewed',t:'practice'},
+    ]},
+    {id:'m12',n:'12',title:'Views, materialized views & functions',tag:'views · RLS · Supabase',items:[
+      {id:'m12-01',l:'Views as saved query logic',t:'concept'},
+      {id:'m12-02',l:'Materialized views for pre-computed aggregates',t:'concept'},
+      {id:'m12-03',l:'PL/pgSQL function basics',t:'concept'},
+      {id:'m12-04',l:'Triggers for audit trails',t:'concept'},
+      {id:'m12-05',l:'Row-level security in Supabase',t:'lab'},
+      {id:'m12-06',l:'Practice problem submitted & reviewed',t:'practice'},
+    ]},
+    {id:'m13',n:'13',title:'Data reconciliation patterns',tag:'capstone · reconciliation',items:[
+      {id:'m13-01',l:'FULL OUTER JOIN diffing — source-of-truth comparison',t:'concept'},
+      {id:'m13-02',l:'Variance detection & classification queries',t:'lab'},
+      {id:'m13-03',l:'Upsert with ON CONFLICT DO UPDATE',t:'concept'},
+      {id:'m13-04',l:'Audit trail schema design',t:'lab'},
+      {id:'m13-05',l:'Capstone: full reconciliation engine',t:'capstone'},
+    ]},
+  ]},
+];
+
+const BS={concept:{bg:'#f0f0eb',c:'#6b6b62'},lab:{bg:'#e8f2fb',c:'#1a5fa8'},practice:{bg:'#eaf5ee',c:'#1e7e44'},capstone:{bg:'#fdeef1',c:'#be2d4a'}};
+const KEY='sql_mastery_v1';
+const gs=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return{}}};
+const ss=s=>localStorage.setItem(KEY,JSON.stringify(s));
+
+function toggleItem(id,mid){
+  const s=gs();s[id]=!s[id];ss(s);
+  const r=document.getElementById('i-'+id);
+  if(r)r.classList.toggle('checked',s[id]);
+  updateMod(mid);updateProg();
+}
+
+function updateMod(mid){
+  const card=document.getElementById('c-'+mid);if(!card)return;
+  const mod=C.flatMap(p=>p.mods).find(m=>m.id===mid);if(!mod)return;
+  const s=gs(),done=mod.items.filter(i=>s[i.id]).length;
+  const f=card.querySelector('.mfrac');if(f)f.textContent=done+'/'+mod.items.length;
+  card.classList.toggle('done',done===mod.items.length);
+}
+
+function updateProg(){
+  const s=gs(),all=C.flatMap(p=>p.mods).flatMap(m=>m.items);
+  const done=all.filter(i=>s[i.id]).length,pct=all.length?Math.round(done/all.length*100):0;
+  document.getElementById('pct-lbl').textContent=pct+'%';
+  document.getElementById('prog-fill').style.width=pct+'%';
+  C.forEach(p=>{
+    const pi=p.mods.flatMap(m=>m.items),pd=pi.filter(i=>s[i.id]).length;
+    const el=document.getElementById('pp-'+p.ph);if(el)el.textContent=pd+'/'+pi.length;
+  });
+}
+
+const tog=mid=>{const c=document.getElementById('c-'+mid);if(c)c.classList.toggle('open')};
+const expandAll=()=>document.querySelectorAll('.card').forEach(c=>c.classList.add('open'));
+const collapseAll=()=>document.querySelectorAll('.card').forEach(c=>c.classList.remove('open'));
+function resetAll(){if(!confirm('Reset all progress?'))return;localStorage.removeItem(KEY);render()}
+
+function render(){
+  const s=gs(),ct=document.getElementById('curriculum');ct.innerHTML='';
+  C.forEach(p=>{
+    const pi=p.mods.flatMap(m=>m.items);
+    const pe=document.createElement('div');pe.className='phase '+p.pc;
+    pe.innerHTML=`<div class="phase-hdr"><div class="pip"></div><span class="pname">${p.pname}</span><span class="prange">${p.pr}</span><span class="pprog" id="pp-${p.ph}">0/${pi.length}</span></div>`;
+    p.mods.forEach(mod=>{
+      const card=document.createElement('div');
+      card.className='card';card.id='c-'+mod.id;
+      const s2=gs(),done=mod.items.filter(i=>s2[i.id]).length;
+      if(done===mod.items.length)card.classList.add('done');
+      const ih=mod.items.map(it=>{
+        const ck=s2[it.id]?'checked':'';
+        const b=BS[it.t]||BS.concept;
+        return`<li class="irow ${ck}" id="i-${it.id}" onclick="toggleItem('${it.id}','${mod.id}')"><div class="icb"></div><span class="ilabel">${it.l}</span><span class="ibadge" style="background:${b.bg};color:${b.c}">${it.t}</span></li>`;
+      }).join('');
+      card.innerHTML=`
+        <div class="card-hdr" onclick="tog('${mod.id}')">
+          <span class="mnum">${mod.n}</span>
+          <div class="mtitle-wrap"><div class="mtitle">${mod.title}</div><div class="mtag">${mod.tag}</div></div>
+          <div class="mmeta">
+            <span class="mfrac">${done}/${mod.items.length}</span>
+            <div class="mcheck"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <span class="chev">▼</span>
+          </div>
+        </div>
+        <div class="card-body"><ul class="ilist">${ih}</ul></div>`;
+      pe.appendChild(card);
+    });
+    ct.appendChild(pe);
+  });
+  updateProg();
+}
+render();
+</script>
+</body>
+</html>
